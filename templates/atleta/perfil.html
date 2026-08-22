@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+
+{% block title %}Perfil de Atleta{% endblock %}
+
+{% block content %}
+<div class="container py-3">
+    {% if atleta %}
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="card border-secondary text-center">
+                <div class="card-body">
+                    <i class="bi bi-person-circle display-3 text-warning mb-2"></i>
+                    <h4 class="fw-bold">{{ atleta.nombre_completo }}</h4>
+                    <p class="text-muted mb-2">CI: {{ atleta.ci }} | {{ atleta.club }}</p>
+                    
+                    <span class="badge {% if atleta.estado == 'CONFIRMADO' %}bg-success{% elif atleta.estado == 'ACREDITADO' %}bg-info text-dark{% else %}bg-warning text-dark{% endif %} fs-6 mb-3">
+                        {{ atleta.estado }}
+                    </span>
+
+                    <ul class="list-group list-group-flush text-start bg-transparent">
+                        <li class="list-group-item bg-transparent text-white border-secondary">
+                            <strong>Dorsal:</strong> <span class="text-warning fw-bold">{{ atleta.dorsal or 'Sin asignar' }}</span>
+                        </li>
+                        <li class="list-group-item bg-transparent text-white border-secondary">
+                            <strong>Modalidad:</strong> {{ atleta.modalidad }}
+                        </li>
+                        <li class="list-group-item bg-transparent text-white border-secondary">
+                            <strong>Categoría:</strong> {{ atleta.categoria_peso }}
+                        </li>
+                        <li class="list-group-item bg-transparent text-white border-secondary">
+                            <strong>Peso Pesaje:</strong> {{ atleta.peso_oficial or '--' }} kg
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <div class="card border-secondary">
+                <div class="card-header bg-dark text-warning fw-bold">
+                    <i class="bi bi-list-stars me-2"></i>Mis Combates Programados
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-dark-custom align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Esquina Roja</th>
+                                    <th>Esquina Azul</th>
+                                    <th>Resultado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for c in combates %}
+                                <tr>
+                                    <td>{{ c.numero_combate }}</td>
+                                    <td class="{% if c.atleta_rojo_id == atleta.id %}fw-bold text-danger{% endif %}">
+                                        {{ c.rojo_nombre }}
+                                    </td>
+                                    <td class="{% if c.atleta_azul_id == atleta.id %}fw-bold text-info{% endif %}">
+                                        {{ c.azul_nombre or 'Pase Directo' }}
+                                    </td>
+                                    <td>
+                                        {% if c.estado == 'FINALIZADO' %}
+                                            <span class="badge bg-secondary">{{ c.puntos_rojo }} - {{ c.puntos_azul }}</span>
+                                            <small class="d-block text-success">Ganador: {{ c.ganador_nombre }}</small>
+                                        {% else %}
+                                            <span class="badge bg-warning text-dark">Pendiente</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="4" class="text-center py-4 text-muted">Aún no se te ha asignado combate en el sorteo.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-warning text-center">
+        No se encontraron datos asociados a tu usuario de atleta.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

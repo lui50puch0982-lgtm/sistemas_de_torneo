@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin - Mesa de Juzgamiento{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-end mb-4">
+        <button onclick="window.history.back();" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left me-1"></i> Volver atrás
+        </button>
+    </div>
+
+    <h3 class="mb-4"><i class="bi bi-clipboard-data text-primary me-2"></i>Mesa Oficial de Juzgamiento</h3>
+
+    <div class="row row-cols-1 row-cols-md-2 g-4">
+        {% for combate in combates %}
+        <div class="col">
+            <div class="card h-100 shadow-sm border-0">
+                <div class="card-header bg-dark text-white d-flex justify-content-between">
+                    <span><strong>{{ combate['tapiz'] }}</strong> - Combate #{{ combate['numero_combate'] }}</span>
+                    <span class="badge bg-secondary">{{ combate['modalidad'] }} ({{ combate['categoria_peso'] }})</span>
+                </div>
+                <div class="card-body">
+                    <form action="{{ url_for('registrar_resultado', combate_id=combate['id']) }}" method="POST">
+                        <div class="row text-center mb-3">
+                            <!-- Esquina Roja -->
+                            <div class="col-6 p-2 rounded bg-danger text-white">
+                                <small>Esquina Roja (#{{ combate['rojo_dorsal'] or 'S/D' }})</small>
+                                <h6 class="fw-bold mb-2">{{ combate['rojo_nombre'] }}</h6>
+                                <input type="radio" class="btn-check" name="ganador_id" id="rojo_{{ combate['id'] }}" value="{{ combate['atleta_rojo_id'] }}" {% if combate['ganador_id'] == combate['atleta_rojo_id'] %}checked{% endif %} required>
+                                <label class="btn btn-outline-light btn-sm w-100" for="rojo_{{ combate['id'] }}">Ganador Rojo</label>
+                            </div>
+
+                            <!-- Esquina Azul -->
+                            <div class="col-6 p-2 rounded bg-primary text-white">
+                                <small>Esquina Azul (#{{ combate['azul_dorsal'] or 'S/D' }})</small>
+                                <h6 class="fw-bold mb-2">{{ combate['azul_nombre'] }}</h6>
+                                <input type="radio" class="btn-check" name="ganador_id" id="azul_{{ combate['id'] }}" value="{{ combate['atleta_azul_id'] }}" {% if combate['ganador_id'] == combate['atleta_azul_id'] %}checked{% endif %} required>
+                                <label class="btn btn-outline-light btn-sm w-100" for="azul_{{ combate['id'] }}">Ganador Azul</label>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label text-muted small fw-bold">Tipo de Victoria</label>
+                            <select name="tipo_victoria" class="form-select form-select-sm" required>
+                                <option value="VFA" {% if combate['tipo_victoria'] == 'VFA' %}selected{% endif %}>VFA - Toque de espaldas</option>
+                                <option value="VSU" {% if combate['tipo_victoria'] == 'VSU' %}selected{% endif %}>VSU - Superioridad Técnica</option>
+                                <option value="VPO" {% if combate['tipo_victoria'] == 'VPO' %}selected{% endif %}>VPO - Puntos</option>
+                                <option value="VIN" {% if combate['tipo_victoria'] == 'VIN' %}selected{% endif %}>VIN - Lesión / Abandono</option>
+                            </select>
+                        </div>
+
+                        <button type="submit" class="btn btn-success btn-sm w-100">
+                            <i class="bi bi-save me-1"></i> Registrar Resultado
+                        </button>
+                    </form>
+                </div>
+                <div class="card-footer text-center bg-light">
+                    <span class="badge {% if combate['estado'] == 'FINALIZADO' %}bg-success{% else %}bg-warning text-dark{% endif %}">
+                        Estado: {{ combate['estado'] }}
+                    </span>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-12 text-center py-5">
+            <div class="alert alert-info shadow-sm" role="alert">
+                <i class="bi bi-info-circle me-2"></i> No hay combates pendientes para juzgamiento.
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin - Control de Pesaje{% endblock %}
+
+{% block content %}
+<div class="container py-2">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3><i class="bi bi-speedometer2 text-warning me-2"></i>Control de Pesaje Oficial</h3>
+        <div>
+            <a href="{{ url_for('admin_acreditacion') }}" class="btn btn-outline-info btn-sm me-2">
+                <i class="bi bi-person-check me-1"></i>Acreditación
+            </a>
+            <a href="{{ url_for('admin_sorteo') }}" class="btn btn-warning btn-sm fw-bold">
+                <i class="bi bi-diagram-3 me-1"></i>Bracket / Sorteo
+            </a>
+        </div>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show mb-4" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-dark text-warning fw-bold py-3">
+            <i class="bi bi-card-checklist me-2"></i>Atletas Acreditados Listos para Pesaje
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-dark-custom align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Dorsal</th>
+                            <th>Nombre Completo</th>
+                            <th>Modalidad / Categoría</th>
+                            <th>Peso Inscripción</th>
+                            <th>Peso Oficial</th>
+                            <th>Estado</th>
+                            <th class="text-center">Registro de Pesaje</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for a in atletas %}
+                        <tr>
+                            <td class="fw-bold text-warning">{{ a.dorsal or 'S/N' }}</td>
+                            <td>{{ a.nombre_completo }}</td>
+                            <td>{{ a.modalidad }} ({{ a.categoria_peso }})</td>
+                            <td>{{ a.peso_inscripcion }} kg</td>
+                            <td>{{ a.peso_oficial or '--' }} kg</td>
+                            <td>
+                                <span class="badge {% if a.estado == 'CONFIRMADO' %}bg-success{% else %}bg-warning text-dark{% endif %}">
+                                    {{ a.estado }}
+                                </span>
+                            </td>
+                            <td>
+                                <form action="{{ url_for('guardar_pesaje') }}" method="POST" class="d-flex justify-content-center gap-2">
+                                    <input type="hidden" name="atleta_id" value="{{ a.id }}">
+                                    <input type="number" step="0.1" name="peso_oficial" class="form-control form-control-sm bg-dark text-white border-secondary" placeholder="Kg" required style="width: 85px;">
+                                    <input type="number" name="dorsal" class="form-control form-control-sm bg-dark text-white border-secondary" value="{{ a.dorsal or '' }}" placeholder="Dorsal" style="width: 85px;">
+                                    <button type="submit" class="btn btn-sm btn-primary">
+                                        <i class="bi bi-save me-1"></i>Guardar
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="7" class="text-center py-4 text-muted">No hay atletas acreditados en espera de pesaje.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

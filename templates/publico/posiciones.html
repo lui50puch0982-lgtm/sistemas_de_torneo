@@ -1,0 +1,210 @@
+{% extends 'base.html' %}
+
+{% block title %}Público - Tabla de Posiciones{% endblock %}
+
+{% block content %}
+<div class="container py-4" style="max-width: 1100px;">
+    <!-- ENCABEZADO -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="mb-0">
+            <i class="bi bi-trophy-fill text-warning me-2"></i>Tabla de Posiciones
+        </h3>
+        <span class="badge bg-danger p-2">
+            <i class="bi bi-broadcast me-1"></i> EN VIVO
+        </span>
+    </div>
+
+    <!-- FILTRO DE CATEGORÍA -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+            <form method="GET" action="{{ url_for('tabla_posiciones') }}" class="row g-3 align-items-center">
+                <div class="col-md-9">
+                    <label class="form-label fw-bold text-secondary small">Seleccionar Categoría / Modalidad:</label>
+                    <select name="categoria" id="select-categoria" class="form-select" onchange="this.form.submit()">
+                        <option value="">-- Selecciona una categoría --</option>
+                        {% for cat in categorias %}
+                            {% set cat_str = cat.modalidad ~ ' - ' ~ cat.categoria_peso %}
+                            <option value="{{ cat_str }}" {% if categoria_sel == cat_str %}selected{% endif %}>
+                                {{ cat_str }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100 fw-bold">Ver Clasificación</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- TABLA DE RESULTADOS -->
+    {% if categoria_sel %}
+        {% set torneo_iniciado = (posiciones | sum(attribute='victorias')) > 0 or (posiciones | sum(attribute='derrotas')) > 0 %}
+        
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                <span class="fw-bold"><i class="bi bi-award me-2"></i>Clasificación: {{ categoria_sel }}</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover align-middle text-center mb-0">
+                        <thead class="table-dark">
+                            <tr>
+                                <th># Pos</th>
+                                <th>Dorsal</th>
+                                <th class="text-start">Atleta</th>
+                                <th class="text-start">Club / Delegación</th>
+                                <th class="text-success">Victorias (V)</th>
+                                <th class="text-danger">Derrotas (D)</th>
+                                <th>Pts Favor</th>
+                                <th>Pts Contra</th>
+                                <th>Dif. Pts</th>
+                                <th>Última Victoria (UWW)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-cuerpo">
+                            {% for pos in posiciones %}
+                            <tr>
+                                <td class="fw-bold">
+                                    {% if torneo_iniciado %}
+                                        {% if loop.index == 1 %}
+                                            <span class="text-warning"><i class="bi bi-award-fill"></i> 1º</span>
+                                        {% elif loop.index == 2 %}
+                                            <span class="text-secondary"><i class="bi bi-award-fill"></i> 2º</span>
+                                        {% elif loop.index == 3 %}
+                                            <span class="text-danger"><i class="bi bi-award-fill"></i> 3º</span>
+                                        {% else %}
+                                            <span class="text-muted">{{ loop.index }}º</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-muted fw-normal">-</span>
+                                    {% endif %}
+                                </td>
+                                <td><span class="badge bg-secondary">#{{ pos.dorsal or 'S/D' }}</span></td>
+                                <td class="text-start fw-bold">{{ pos.nombre }}</td>
+                                <td class="text-start text-muted">{{ pos.club }}</td>
+                                <td class="text-success fw-bold">{{ pos.victorias }}</td>
+                                <td class="text-danger">{{ pos.derrotas }}</td>
+                                <td>{{ pos.puntos_favor }}</td>
+                                <td>{{ pos.puntos_contra }}</td>
+                                <td class="fw-bold {% if pos.diferencia > 0 %}text-success{% elif pos.diferencia < 0 %}text-danger{% endif %}">
+                                    {% if pos.diferencia > 0 %}+{% endif %}{{ pos.diferencia }}
+                                </td>
+                                <td>
+                                    {% if pos.ultimo_tipo_victoria == 'VFA' %}
+                                        <span class="badge bg-danger" title="Toque de Espaldas">VFA (Toque)</span>
+                                    {% elif pos.ultimo_tipo_victoria == 'VSU' %}
+                                        <span class="badge bg-warning text-dark" title="Superioridad Técnica">VSU (Superioridad)</span>
+                                    {% elif pos.ultimo_tipo_victoria == 'VPO' %}
+                                        <span class="badge bg-info text-dark" title="Puntos">VPO (Puntos)</span>
+                                    {% elif pos.ultimo_tipo_victoria == 'VIN' %}
+                                        <span class="badge bg-secondary" title="Lesión / Abandono">VIN (Lesión)</span>
+                                    {% elif pos.ultimo_tipo_victoria == 'DQO' or pos.ultimo_tipo_victoria == 'DSQ' %}
+                                        <span class="badge bg-dark" title="Descalificación">DQO (Descalif.)</span>
+                                    {% else %}
+                                        <span class="text-muted small">-</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="10" class="text-center py-4 text-muted">
+                                    No hay combates o resultados registrados en esta categoría aún.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="alert alert-info text-center shadow-sm">
+            <i class="bi bi-info-circle me-1"></i> Selecciona una categoría en el desplegable superior para ver las posiciones.
+        </div>
+    {% endif %}
+</div>
+
+<!-- SCRIPT AJAX PARA ACTUALIZACIÓN EN TIEMPO REAL -->
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const selectCategoria = document.getElementById('select-categoria');
+
+    function obtenerBadgeVictoria(tipo) {
+        if (!tipo) return '<span class="text-muted small">-</span>';
+        switch (tipo) {
+            case 'VFA':
+                return '<span class="badge bg-danger" title="Toque de Espaldas">VFA (Toque)</span>';
+            case 'VSU':
+                return '<span class="badge bg-warning text-dark" title="Superioridad Técnica">VSU (Superioridad)</span>';
+            case 'VPO':
+                return '<span class="badge bg-info text-dark" title="Puntos">VPO (Puntos)</span>';
+            case 'VIN':
+                return '<span class="badge bg-secondary" title="Lesión / Abandono">VIN (Lesión)</span>';
+            case 'DQO':
+            case 'DSQ':
+                return '<span class="badge bg-dark" title="Descalificación">DQO (Descalif.)</span>';
+            default:
+                return `<span class="badge bg-light text-dark">${tipo}</span>`;
+        }
+    }
+
+    function actualizarTabla() {
+        const categoria = selectCategoria ? selectCategoria.value : '';
+        if (!categoria) return;
+
+        fetch(`/api/posiciones?categoria=${encodeURIComponent(categoria)}`)
+            .then(response => response.json())
+            .then(data => {
+                const tbody = document.getElementById('tabla-cuerpo');
+                if (!tbody) return;
+
+                tbody.innerHTML = '';
+
+                if (data.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="10" class="text-center py-4 text-muted">No hay combates o resultados registrados en esta categoría aún.</td></tr>`;
+                    return;
+                }
+
+                // Evaluamos si ya finalizó al menos un combate en esta categoría
+                const torneoIniciado = data.some(pos => (pos.victorias || 0) > 0 || (pos.derrotas || 0) > 0);
+
+                data.forEach((pos, index) => {
+                    let medalla = `<span class="text-muted fw-normal">-</span>`;
+
+                    if (torneoIniciado) {
+                        medalla = `<span class="text-muted">${index + 1}º</span>`;
+                        if (index === 0) medalla = `<span class="text-warning fw-bold"><i class="bi bi-award-fill"></i> 1º</span>`;
+                        else if (index === 1) medalla = `<span class="text-secondary fw-bold"><i class="bi bi-award-fill"></i> 2º</span>`;
+                        else if (index === 2) medalla = `<span class="text-danger fw-bold"><i class="bi bi-award-fill"></i> 3º</span>`;
+                    }
+
+                    const difClass = pos.diferencia > 0 ? 'text-success' : (pos.diferencia < 0 ? 'text-danger' : '');
+                    const difSigno = pos.diferencia > 0 ? '+' : '';
+                    const victoriaBadge = obtenerBadgeVictoria(pos.ultimo_tipo_victoria);
+
+                    const fila = `
+                        <tr>
+                            <td class="fw-bold">${medalla}</td>
+                            <td><span class="badge bg-secondary">#${pos.dorsal || 'S/D'}</span></td>
+                            <td class="text-start fw-bold">${pos.nombre}</td>
+                            <td class="text-start text-muted">${pos.club}</td>
+                            <td class="text-success fw-bold">${pos.victorias}</td>
+                            <td class="text-danger">${pos.derrotas}</td>
+                            <td>${pos.puntos_favor}</td>
+                            <td>${pos.puntos_contra}</td>
+                            <td class="fw-bold ${difClass}">${difSigno}${pos.diferencia}</td>
+                            <td>${victoriaBadge}</td>
+                        </tr>
+                    `;
+                    tbody.innerHTML += fila;
+                });
+            })
+            .catch(err => console.error("Error al consultar posiciones:", err));
+    }
+
+    // Consulta los cambios en tiempo real cada 3 segundos
+    setInterval(actualizarTabla, 3000);
+});
+</script>
+{% endblock %}

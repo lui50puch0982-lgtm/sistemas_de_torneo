@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Llave de Torneo - {{ modalidad }} {{ peso }}</title>
+    <style>
+        body {
+            background-color: #121212;
+            color: #ffffff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+        }
+
+        h2 {
+            margin-bottom: 30px;
+            color: #f1c40f;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .bracket-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 40px;
+            width: 100%;
+            overflow-x: auto;
+            padding: 20px 0;
+        }
+
+        .ronda-columna {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            min-height: 550px;
+        }
+
+        .ronda-titulo {
+            text-align: center;
+            font-size: 0.9rem;
+            color: #888;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .match-card {
+            background: #1e1e1e;
+            border: 1px solid #333;
+            border-radius: 8px;
+            width: 200px;
+            padding: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            margin: 10px 0;
+        }
+
+        .match-header {
+            font-size: 0.75rem;
+            color: #aaa;
+            text-align: center;
+            margin-bottom: 6px;
+        }
+
+        .atleta-box {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 10px;
+            margin: 3px 0;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            background: #2a2a2a;
+        }
+
+        .atleta-box.rojo { border-left: 4px solid #e74c3c; }
+        .atleta-box.azul { border-left: 4px solid #3498db; }
+
+        .atleta-box.ganador {
+            background: #27ae60;
+            color: #fff;
+            font-weight: bold;
+        }
+
+        .por-definir {
+            color: #666;
+            font-style: italic;
+        }
+
+        .puntos {
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .btn-volver {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #34495e;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+
+        .btn-volver:hover {
+            background-color: #2c3e50;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Llave Eliminatoria: {{ modalidad }} - {{ peso }}</h2>
+
+    <div class="bracket-container">
+        {% for num_ronda, lista_combates in rondas.items() %}
+            <div class="ronda-columna">
+                <div class="ronda-titulo">Ronda {{ num_ronda }}</div>
+                {% for c in lista_combates %}
+                    <div class="match-card">
+                        <div class="match-header">Combate #{{ c.numero_combate }}</div>
+                        
+                        <div class="atleta-box rojo {% if c.ganador_id == c.atleta_rojo_id and c.ganador_id != None %}ganador{% endif %}">
+                            <span>
+                                {% if c.rojo_nombre %}
+                                    {{ c.rojo_nombre }}
+                                {% else %}
+                                    <span class="por-definir">Por definir</span>
+                                {% endif %}
+                            </span>
+                            <span class="puntos">{{ c.puntos_rojo }}</span>
+                        </div>
+
+                        <div class="atleta-box azul {% if c.ganador_id == c.atleta_azul_id and c.ganador_id != None %}ganador{% endif %}">
+                            <span>
+                                {% if c.azul_nombre %}
+                                    {{ c.azul_nombre }}
+                                {% else %}
+                                    <span class="por-definir">Por definir</span>
+                                {% endif %}
+                            </span>
+                            <span class="puntos">{{ c.puntos_azul }}</span>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endfor %}
+    </div>
+
+    <a href="{{ url_for('admin_sorteo') }}" class="btn-volver">Volver al Sorteo</a>
+
+</body>
+</html>

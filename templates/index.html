@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block title %}Inicio - Sistema de Torneo UWW{% endblock %}
+
+{% block content %}
+<div class="container py-5 text-center">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="mb-4">
+                <i class="bi bi-trophy text-warning display-1"></i>
+            </div>
+            <h1 class="fw-bold mb-3">Gestión de Torneos de Lucha Olímpica</h1>
+            <p class="lead text-muted mb-4">
+                Plataforma oficial para la acreditación, pesaje, sorteo de llaves con reglamento UWW y marcador en vivo.
+            </p>
+
+            <div class="d-flex justify-content-center gap-3">
+                {% if session.get('user_id') %}
+                    {% if session.get('rol') == 'admin' %}
+                        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-warning btn-lg px-4 fw-bold">
+                            <i class="bi bi-speedometer2 me-2"></i>Ir al Panel de Control
+                        </a>
+                    {% else %}
+                        <a href="{{ url_for('perfil_atleta') }}" class="btn btn-primary btn-lg px-4 fw-bold">
+                            <i class="bi bi-person-badge me-2"></i>Mi Perfil de Atleta
+                        </a>
+                    {% endif %}
+                {% else %}
+                    <a href="{{ url_for('login') }}" class="btn btn-outline-light btn-lg px-4">
+                        <i class="bi bi-box-arrow-in-right me-2"></i>Iniciar Sesión
+                    </a>
+                    <a href="{{ url_for('registro_usuario') }}" class="btn btn-warning btn-lg px-4 fw-bold">
+                        <i class="bi bi-pencil-square me-2"></i>Pre-Inscripción Atletas
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

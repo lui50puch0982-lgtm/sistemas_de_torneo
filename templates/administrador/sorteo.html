@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Sorteo y Sub-llaves - Torneo UWW</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        body { background-color: #121212; color: #e0e0e0; }
+        .card-combate { width: 310px; min-width: 310px; background-color: #1e1e1e; border: 1px solid #333; }
+        .columna-ronda { width: 330px; min-width: 330px; background-color: #181818; border-radius: 8px; padding: 12px; }
+        .atleta-rojo { background-color: #4a0d0d; border-left: 5px solid #dc3545; }
+        .atleta-azul { background-color: #0d2b4a; border-left: 5px solid #0d6efd; }
+    </style>
+</head>
+<body class="p-4">
+
+<div class="container-fluid">
+    <!-- MENSAJES FLASH -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- CABECERA Y NAVEGACIÓN -->
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-secondary">
+        <div>
+            <h2><i class="bi bi-diagram-3 text-warning"></i> Sorteo y Sub-llaves de Eliminación</h2>
+            <p class="text-muted mb-0">Gestión de combates, avance de rondas y perdedores</p>
+        </div>
+
+        <div class="d-flex gap-2 align-items-center">
+            <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-light btn-sm">
+                <i class="bi bi-speedometer2"></i> Dashboard
+            </a>
+
+            <!-- Selector de Categoría -->
+            <form method="GET" action="{{ url_for('admin_sorteo') }}" class="d-flex gap-2">
+                <select name="categoria" class="form-select bg-dark text-white border-secondary" onchange="this.form.submit()">
+                    <option value="">-- Seleccionar Categoría --</option>
+                    {% for cat in categorias %}
+                        <option value="{{ cat.modalidad }} - {{ cat.categoria_peso }}" 
+                                {% if categoria_sel == (cat.modalidad ~ ' - ' ~ cat.categoria_peso) %}selected{% endif %}>
+                            {{ cat.modalidad }} - {{ cat.categoria_peso }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </form>
+        </div>
+    </div>
+
+    {% if categoria_sel %}
+    <!-- PANEL DE ACCIONES DE SORTEO -->
+    <div class="card bg-dark text-white p-3 mb-4 border-secondary d-flex flex-row justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+            <h5 class="mb-0 text-warning">{{ categoria_sel }}</h5>
+            <small class="text-muted">Atletas Acreditados: {{ atletas|length }} | Ronda Activa: {{ ronda_actual }}</small>
+        </div>
+
+        <div class="d-flex gap-2 flex-wrap">
+            <!-- Formulario Generar Sorteo Inicial (UWW) -->
+            <form method="POST" action="{{ url_for('generar_sorteo') }}">
+                <input type="hidden" name="categoria" value="{{ categoria_sel }}">
+                <button type="submit" class="btn btn-outline-warning" onclick="return confirm('¿Generar el sorteo inicial? Esto borrará los combates actuales de esta categoría.');">
+                    <i class="bi bi-shuffle"></i> Sorteo Inicial
+                </button>
+            </form>
+
+            <!-- Formulario Filtrar Ganadores y Avanzar Sub-llave -->
+            {% if combates and ronda_completa %}
+            <form method="POST" action="{{ url_for('procesar_siguiente_ronda') }}">
+                <input type="hidden" name="categoria" value="{{ categoria_sel }}">
+                <button type="submit" class="btn btn-success fw-bold">
+                    <i class="bi bi-filter-square-fill"></i> Filtrar Ganadores y Sortear Ronda {{ ronda_actual + 1 }}
+                </button>
+            </form>
+            {% elif combates %}
+            <button class="btn btn-secondary" disabled title="Finalice todos los combates de la ronda actual para habilitar">
+                <i class="bi bi-lock-fill"></i> Siguiente Ronda (Pendiente)
+            </button>
+            {% endif %}
+
+            <!-- Limpiar Combates -->
+            <form method="POST" action="{{ url_for('limpiar_combates') }}">
+                <input type="hidden" name="categoria" value="{{ categoria_sel }}">
+                <button type="submit" class="btn btn-outline-danger" onclick="return confirm('¿Limpiar todos los combates de esta categoría?');">
+                    <i class="bi bi-trash"></i> Limpiar
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- VISTA HORIZONTAL DE LLAVES / RONDAS -->
+    <h5 class="text-info mb-3"><i class="bi bi-diagram-2"></i> Estructura del Torneo</h5>
+    <div class="d-flex flex-row gap-3 overflow-auto pb-4">
+        {% set combates_por_ronda = combates | groupby('ronda') %}
+        
+        {% for grupo_ronda in combates_por_ronda %}
+        <div class="columna-ronda">
+            <div class="text-center mb-3 pb-2 border-bottom border-secondary">
+                <h6 class="text-warning mb-0">RONDA {{ grupo_ronda.grouper }}</h6>
+                <small class="text-muted">{{ grupo_ronda.list[0].fase }}</small>
+            </div>
+
+            <div class="d-flex flex-column gap-3">
+                {% for c in grupo_ronda.list %}
+                <div class="card card-combate text-white shadow-sm">
+                    <div class="card-header d-flex justify-content-between align-items-center py-1 px-2 bg-dark">
+                        <small class="fw-bold text-muted">Combate #{{ c.numero_combate }}</small>
+                        <span class="badge bg-secondary small">{{ c.tapiz }}</span>
+                    </div>
+                    <div class="card-body p-2">
+                        <!-- Esquina Roja -->
+                        <div class="p-2 rounded mb-1 atleta-rojo d-flex justify-content-between align-items-center">
+                            <div>
+                                <small class="fw-bold d-block">
+                                    {% if c.rojo_dorsal %}[#{{ c.rojo_dorsal }}] {% endif %}{{ c.rojo_nombre or 'DESCONOCIDO' }}
+                                </small>
+                                <small class="text-muted" style="font-size: 0.75rem;">{{ c.rojo_club or '' }}</small>
+                            </div>
+                            <span class="fs-5 fw-bold">{{ c.puntos_rojo }}</span>
+                        </div>
+
+                        <!-- Esquina Azul -->
+                        <div class="p-2 rounded atleta-azul d-flex justify-content-between align-items-center">
+                            <div>
+                                <small class="fw-bold d-block">
+                                    {% if c.azul_dorsal %}[#{{ c.azul_dorsal }}] {% endif %}{{ c.azul_nombre or 'PASE DIRECTO (BYE)' }}
+                                </small>
+                                <small class="text-muted" style="font-size: 0.75rem;">{{ c.azul_club or '' }}</small>
+                            </div>
+                            <span class="fs-5 fw-bold">{{ c.puntos_azul }}</span>
+                        </div>
+
+                        <!-- Info, Arbitraje y Acciones -->
+                        <div class="mt-2 text-center">
+                            {% if c.arbitro %}
+                                <div class="text-muted" style="font-size: 0.75rem;"><i class="bi bi-person-badge"></i> Árb: {{ c.arbitro }}</div>
+                            {% endif %}
+
+                            {% if c.estado == 'FINALIZADO' %}
+                                <small class="text-success fw-bold d-block mt-1">
+                                    <i class="bi bi-trophy-fill"></i> Ganador: {{ c.ganador_nombre or 'N/A' }}
+                                </small>
+                            {% elif c.atleta_azul_id or c.estado == 'EN PROGRESO' %}
+                                <a href="{{ url_for('mesa_control', combate_id=c.id) }}" class="btn btn-sm btn-outline-info w-100 mt-2">
+                                    <i class="bi bi-play-circle"></i> Mesa Control
+                                </a>
+                            {% else %}
+                                <div class="badge bg-dark text-muted border border-secondary w-100 p-2 mt-2">
+                                    <i class="bi bi-person-check-fill"></i> Pase Libre (Descanso)
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% else %}
+        <div class="alert alert-dark border-secondary w-100 text-center py-5">
+            <i class="bi bi-info-circle fs-1 text-muted d-block mb-2"></i>
+            No hay combates programados en esta categoría. Haz clic en <strong>"Sorteo Inicial"</strong> para comenzar.
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- LISTA FILTRADA DE PERDEDORES -->
+    <div class="mt-4 pt-3 border-top border-secondary">
+        <h5 class="text-danger mb-3"><i class="bi bi-person-x-fill"></i> Lista Filtrada de Perdedores / Eliminados</h5>
+        {% if perdedores %}
+        <div class="table-responsive">
+            <table class="table table-dark table-striped table-bordered align-middle">
+                <thead>
+                    <tr>
+                        <th>Atleta Eliminado</th>
+                        <th>Club / Delegación</th>
+                        <th>Eliminado en Ronda</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in perdedores %}
+                    <tr>
+                        <td class="fw-bold">{{ p.nombre_completo }}</td>
+                        <td class="text-muted">{{ p.club or 'N/A' }}</td>
+                        <td><span class="badge bg-secondary">Ronda {{ p.ronda }}</span></td>
+                        <td><span class="text-danger small"><i class="bi bi-x-circle-fill"></i> Fuera de Cuadro</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-muted small">Aún no hay atletas eliminados registrados en esta categoría.</p>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/bootstrap.bundle.min.js"></script>
+</body>
+</html>

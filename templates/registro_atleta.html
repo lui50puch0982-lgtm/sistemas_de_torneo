@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4 mb-5" style="max-width: 650px;">
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0 text-center fw-bold">Pre-Inscripción de Competidor</h4>
+        </div>
+        <div class="card-body p-4">
+
+            <form action="{{ url_for('registro_atleta') }}" method="POST">
+                <h5 class="text-secondary border-bottom pb-2">Datos de Cuenta</h5>
+                <div class="mb-3">
+                    <label class="form-label">Nombre de Usuario</label>
+                    <input type="text" name="username" class="form-control" placeholder="Ej: jperez" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Contraseña</label>
+                    <input type="password" name="password" class="form-control" placeholder="••••••••" required>
+                </div>
+
+                <h5 class="text-secondary border-bottom pb-2 mt-4">Información Personal</h5>
+                <div class="mb-3">
+                    <label class="form-label">Nombre Completo</label>
+                    <input type="text" name="nombre_completo" class="form-control" placeholder="Juan Pérez" required>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">edad</label>
+                        <input type="text" name="ci" class="form-control" placeholder="6 años" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Departamento</label>
+                        <select name="departamento" class="form-select" required>
+                            <option value="" disabled selected>Selecciona...</option>
+                            <option value="La Paz">La Paz</option>
+                            <option value="El Alto">El Alto</option>
+                            <option value="Cochabamba">Cochabamba</option>
+                            <option value="Santa Cruz">Santa Cruz</option>
+                            <option value="Oruro">Oruro</option>
+                            <option value="Potosí">Potosí</option>
+                            <option value="Tarija">Tarija</option>
+                            <option value="Chuquisaca">Chuquisaca</option>
+                            <option value="Beni">Beni</option>
+                            <option value="Pando">Pando</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Club / Escuela</label>
+                        <input type="text" name="club" class="form-control" placeholder="Nombre de tu club" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Sexo</label>
+                        <select name="sexo" class="form-select" required>
+                            <option value="M">Masculino</option>
+                            <option value="F">Femenino</option>
+                        </select>
+                    </div>
+                </div>
+
+                <h5 class="text-secondary border-bottom pb-2 mt-4">Categoría de Inscripción</h5>
+                <div class="mb-3">
+                    <label class="form-label">Modalidad</label>
+                    <select name="modalidad" class="form-select" required>
+                        <option value="Libre">Lucha Libre</option>
+                        <option value="Grecorromana">Grecorromana</option>
+                        <option value="Femenina">Lucha Femenina</option>
+                    </select>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Categoría de Peso</label>
+                        <input type="text" name="categoria_peso" class="form-control" placeholder="Ej: 74 kg" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Peso Previo (Kg)</label>
+                        <input type="number" step="0.1" name="peso_inscripcion" class="form-control" placeholder="Ej: 73.5" required>
+                    </div>
+                </div>
+
+                <div class="d-grid gap-2 mt-4">
+                    <button type="submit" class="btn btn-primary btn-lg">Completar Pre-Inscripción</button>
+                    <a href="{{ url_for('login') }}" class="btn btn-outline-secondary">Volver al Login</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

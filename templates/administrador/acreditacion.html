@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin - Acreditación de Atletas{% endblock %}
+
+{% block content %}
+<div class="container py-2">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="mb-0">
+            <i class="bi bi-person-check text-primary me-2"></i>Acreditación y Control de Documentos
+        </h3>
+        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left me-1"></i> Volver al Dashboard
+        </a>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show mb-4" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <!-- PENDIENTES DE APROBACIÓN -->
+    <div class="card shadow-sm border-0 mb-5">
+        <div class="card-header bg-warning text-dark fw-bold d-flex justify-content-between align-items-center py-3">
+            <span><i class="bi bi-clock-history me-2"></i>Atletas Pendientes de Aprobación</span>
+            <span class="badge bg-dark text-warning">{{ pendientes|length }}</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Nombre Completo</th>
+                            <th>CI</th>
+                            <th>Depto / Club</th>
+                            <th>Modalidad / Categoría</th>
+                            <th>Peso Inscripción</th>
+                            <th class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for atleta in pendientes %}
+                        <tr>
+                            <td class="fw-bold">{{ atleta['nombre_completo'] }}</td>
+                            <td>{{ atleta['ci'] }}</td>
+                            <td>{{ atleta['departamento'] }} - {{ atleta['club'] }}</td>
+                            <td>{{ atleta['modalidad'] }} ({{ atleta['categoria_peso'] }})</td>
+                            <td>{{ atleta['peso_inscripcion'] }} kg</td>
+                            <td class="text-center">
+                                <form action="{{ url_for('acreditar_atleta', atleta_id=atleta['id']) }}" method="POST" class="d-inline-block">
+                                    <input type="hidden" name="accion" value="aprobar">
+                                    <button type="submit" class="btn btn-success btn-sm me-1 fw-semibold">
+                                        <i class="bi bi-check-circle me-1"></i>Aprobar
+                                    </button>
+                                </form>
+                                <form action="{{ url_for('acreditar_atleta', atleta_id=atleta['id']) }}" method="POST" class="d-inline-block">
+                                    <input type="hidden" name="accion" value="rechazar">
+                                    <button type="submit" class="btn btn-danger btn-sm fw-semibold">
+                                        <i class="bi bi-x-circle me-1"></i>Rechazar
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center py-4 text-muted">
+                                <i class="bi bi-inbox fs-4 d-block mb-1"></i>
+                                No hay pre-inscripciones pendientes de revisión.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ATLETAS ACREDITADOS -->
+    <h4 class="mb-3"><i class="bi bi-check-all text-success me-2"></i>Atletas Acreditados / Confirmados</h4>
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-dark-custom align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Dorsal</th>
+                            <th>Nombre</th>
+                            <th>CI</th>
+                            <th>Departamento</th>
+                            <th>Club</th>
+                            <th>Modalidad / Categoría</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for atleta in acreditados %}
+                        <tr>
+                            <td>
+                                <span class="badge bg-secondary">
+                                    {{ atleta['dorsal'] if atleta['dorsal'] else 'Sin Dorsal' }}
+                                </span>
+                            </td>
+                            <td class="fw-semibold">{{ atleta['nombre_completo'] }}</td>
+                            <td>{{ atleta['ci'] }}</td>
+                            <td>{{ atleta['departamento'] }}</td>
+                            <td>{{ atleta['club'] }}</td>
+                            <td>{{ atleta['modalidad'] }} ({{ atleta['categoria_peso'] }})</td>
+                            <td>
+                                {% if atleta['estado'] == 'CONFIRMADO' %}
+                                    <span class="badge bg-success"><i class="bi bi-check-lg me-1"></i>CONFIRMADO</span>
+                                {% else %}
+                                    <span class="badge bg-info text-dark"><i class="bi bi-card-checkmark me-1"></i>ACREDITADO</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="7" class="text-center py-4 text-muted">Aún no hay atletas acreditados.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

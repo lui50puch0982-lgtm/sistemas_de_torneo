@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+
+{% block title %}Iniciar Sesión - Torneo UWW{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+            <div class="card shadow-lg border-secondary">
+                <div class="card-header bg-dark text-warning text-center py-3">
+                    <h4 class="mb-0 fw-bold"><i class="bi bi-shield-lock me-2"></i>Acceso al Sistema</h4>
+                </div>
+                <div class="card-body p-4">
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                      {% if messages %}
+                        {% for category, message in messages %}
+                          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                          </div>
+                        {% endfor %}
+                      {% endif %}
+                    {% endwith %}
+
+                    <form action="{{ url_for('login') }}" method="POST">
+                        <div class="mb-3">
+                            <label class="form-label text-white-50">Usuario</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-dark border-secondary text-warning"><i class="bi bi-person"></i></span>
+                                <input type="text" name="username" class="form-control bg-dark text-white border-secondary" required placeholder="Ingresa tu usuario">
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label text-white-50">Contraseña</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-dark border-secondary text-warning"><i class="bi bi-key"></i></span>
+                                <input type="password" name="password" class="form-control bg-dark text-white border-secondary" required placeholder="••••••••">
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-warning w-100 fw-bold py-2 mb-3">
+                            <i class="bi bi-box-arrow-in-right me-1"></i>Ingresar
+                        </button>
+                    </form>
+
+                    <!-- SECCIÓN ACCESO COMO INVITADO / PÚBLICO -->
+                    <div class="relative flex py-2 align-items-center">
+                        <hr class="border-secondary w-100 my-2">
+                    </div>
+
+                    <a href="{{ url_for('tabla_posiciones') }}" class="btn btn-outline-info w-100 py-2">
+                        <i class="bi bi-eye me-1"></i>Ingresar como Invitado (Modo Público)
+                    </a>
+                </div>
+                
+                <div class="card-footer bg-dark text-center py-3 border-secondary">
+                    <span class="text-muted">¿Eres un atleta nuevo?</span>
+                    <a href="{{ url_for('registro_usuario') }}" class="text-warning text-decoration-none ms-1">Regístrate aquí</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
