@@ -5,12 +5,12 @@
 {% block content %}
 <div class="container py-4">
     <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card shadow border-secondary">
+        <div class="col-md-8 col-lg-7">
+            <div class="card shadow-lg border-secondary">
                 <div class="card-header bg-dark text-warning py-3">
-                    <h4 class="mb-0 fw-bold"><i class="bi bi-person-plus me-2"></i>Formulario de Pre-Inscripción</h4>
+                    <h4 class="mb-0 fw-bold text-center"><i class="bi bi-person-plus me-2"></i>Formulario de Pre-Inscripción</h4>
                 </div>
-                <div class="card-body p-4">
+                <div class="card-body p-4 bg-dark text-white">
                     {% with messages = get_flashed_messages(with_categories=true) %}
                       {% if messages %}
                         {% for category, message in messages %}
@@ -22,82 +22,185 @@
                       {% endif %}
                     {% endwith %}
 
-                    <form action="{{ url_for('registro_usuario') }}" method="POST" class="row g-3">
+                    <form action="{{ url_for('registro_usuario') }}" method="POST" class="row g-3 needs-validation" id="formRegistro">
+                        <div class="col-12">
+                            <h6 class="text-warning border-bottom border-secondary pb-2 mb-3">
+                                <i class="bi bi-person-badge me-1"></i>Información Personal y Deportiva
+                            </h6>
+                        </div>
+
+                        <!-- Nombre Completo -->
                         <div class="col-md-8">
-                            <label class="form-label">Nombre Completo</label>
-                            <input type="text" name="nombre_completo" class="form-control bg-dark text-white border-secondary" required>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Edad</label>
-                            <input type="text" name="" class="form-control bg-dark text-white border-secondary" required>
-                        </div>
-
-                        <div class="col-md-6">
-    <label class="form-label">Departamento</label>
-    <select name="departamento" class="form-select bg-dark text-white border-secondary" required>
-        <option value="">-- Seleccionar Departamento --</option>
-        <option value="Beni">Beni</option>
-        <option value="Chuquisaca">Chuquisaca</option>
-        <option value="Cochabamba">Cochabamba</option>
-        <option value="La Paz">La Paz</option>
-        <option value="Oruro">Oruro</option>
-        <option value="Pando">Pando</option>
-        <option value="Potosí">Potosí</option>
-        <option value="Santa Cruz">Santa Cruz</option>
-        <option value="Tarija">Tarija</option>
-    </select>
-</div>
-                        <div class="col-md-6">
-                            <label class="form-label">Club / Escuela</label>
-                            <input type="text" name="club" class="form-control bg-dark text-white border-secondary" placeholder="Ej: Club Titanes" required>
+                            <label class="form-label text-light">Nombre Completo <span class="text-danger">*</span></label>
+                            <input type="text" name="nombre_completo" class="form-control bg-dark text-white border-secondary" 
+                                   value="{{ form_data.get('nombre_completo', '') if form_data else '' }}"
+                                   placeholder="Ej: Milton Triguero Rondo" minlength="3" maxlength="100" required>
+                            <div class="form-text text-muted">Ingresa nombres y apellidos.</div>
                         </div>
 
+                        <!-- C.I. / Documento de Identidad -->
                         <div class="col-md-4">
-                            <label class="form-label">Modalidad</label>
-                            <select name="modalidad" class="form-select bg-dark text-white border-secondary" required>
-                                <option value="Libre Masculino">Libre Masculino</option>
-                                <option value="Grecorromana">Grecorromana</option>
-                                <option value="Libre Femenino">Libre Femenino</option>
+                            <label class="form-label text-light">C.I. / Documento <span class="text-danger">*</span></label>
+                            <input type="text" name="ci" class="form-control bg-dark text-white border-secondary" 
+                                   value="{{ form_data.get('ci', '') if form_data else '' }}"
+                                   placeholder="Ej: 8873829" minlength="3" maxlength="20" required>
+                        </div>
+
+                        <!-- Departamento -->
+                        <div class="col-md-6">
+                            <label class="form-label text-light">Departamento <span class="text-danger">*</span></label>
+                            <select name="departamento" class="form-select bg-dark text-white border-secondary" required>
+                                <option value="">-- Seleccionar Departamento --</option>
+                                {% set dep_sel = form_data.get('departamento', '') if form_data else '' %}
+                                {% for dep in ['Beni', 'Chuquisaca', 'Cochabamba', 'La Paz', 'Oruro', 'Pando', 'Potosí', 'Santa Cruz', 'Tarija'] %}
+                                    <option value="{{ dep }}" {% if dep_sel == dep %}selected{% endif %}>{{ dep }}</option>
+                                {% endfor %}
                             </select>
                         </div>
+
+                        <!-- Club / Escuela -->
+                        <div class="col-md-6">
+                            <label class="form-label text-light">Club / Escuela <span class="text-danger">*</span></label>
+                            <input type="text" name="club" class="form-control bg-dark text-white border-secondary" 
+                                   value="{{ form_data.get('club', '') if form_data else '' }}"
+                                   placeholder="Ej: Club Titanes" minlength="2" maxlength="100" required>
+                        </div>
+
+                        <!-- Modalidad -->
                         <div class="col-md-4">
-                            <label class="form-label">Categoría de Peso</label>
-                            <select name="categoria_peso" class="form-select bg-dark text-white border-secondary" required>
-                                <option value="57 kg">57 kg</option>
-                                <option value="61 kg">61 kg</option>
-                                <option value="65 kg">65 kg</option>
-                                <option value="70 kg">70 kg</option>
-                                <option value="74 kg">74 kg</option>
-                                <option value="86 kg">86 kg</option>
-                                <option value="97 kg">97 kg</option>
-                                <option value="125 kg">125 kg</option>
+                            <label class="form-label text-light">Modalidad <span class="text-danger">*</span></label>
+                            {% set mod_sel = form_data.get('modalidad', 'Libre Masculino') if form_data else 'Libre Masculino' %}
+                            <select name="modalidad" id="modalidadSelect" class="form-select bg-dark text-white border-secondary" required>
+                                <option value="Libre Masculino" {% if mod_sel == 'Libre Masculino' %}selected{% endif %}>Libre Masculino</option>
+                                <option value="Grecorromana" {% if mod_sel == 'Grecorromana' %}selected{% endif %}>Grecorromana</option>
+                                <option value="Libre Femenino" {% if mod_sel == 'Libre Femenino' %}selected{% endif %}>Libre Femenino</option>
                             </select>
                         </div>
+
+                        <!-- Categoría de Peso -->
                         <div class="col-md-4">
-                            <label class="form-label">Peso Previsional (kg)</label>
-                            <input type="number" step="0.1" name="peso_inscripcion" class="form-control bg-dark text-white border-secondary" required>
+                            <label class="form-label text-light">Categoría de Peso <span class="text-danger">*</span></label>
+                            <select name="categoria_peso" id="categoriaPesoSelect" class="form-select bg-dark text-white border-secondary" required>
+                                <!-- Se actualiza dinámicamente según la modalidad seleccionada -->
+                            </select>
                         </div>
 
-                        <hr class="my-4 border-secondary">
-
-                        <div class="col-md-6">
-                            <label class="form-label">Nombre de Usuario</label>
-                            <input type="text" name="username" class="form-control bg-dark text-white border-secondary" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Contraseña</label>
-                            <input type="password" name="password" class="form-control bg-dark text-white border-secondary" required>
+                        <!-- Peso Previsional -->
+                        <div class="col-md-4">
+                            <label class="form-label text-light">Peso Aprox. (kg) <span class="text-danger">*</span></label>
+                            <input type="number" step="0.1" min="20" max="250" name="peso_inscripcion" 
+                                   class="form-control bg-dark text-white border-secondary" 
+                                   value="{{ form_data.get('peso_inscripcion', '') if form_data else '' }}"
+                                   placeholder="Ej: 74.0" required>
                         </div>
 
                         <div class="col-12 mt-4">
-                            <button type="submit" class="btn btn-warning w-100 fw-bold py-2">
-                                <i class="bi bi-send me-1"></i>Enviar Pre-Inscripción
+                            <h6 class="text-warning border-bottom border-secondary pb-2 mb-3">
+                                <i class="bi bi-shield-lock me-1"></i>Credenciales de Acceso
+                            </h6>
+                        </div>
+
+                        <!-- Usuario -->
+                        <div class="col-md-12">
+                            <label class="form-label text-light">Nombre de Usuario <span class="text-danger">*</span></label>
+                            <input type="text" name="username" class="form-control bg-dark text-white border-secondary" 
+                                   value="{{ form_data.get('username', '') if form_data else '' }}"
+                                   placeholder="Ej: milton123" minlength="3" maxlength="30" 
+                                   pattern="^[a-zA-Z0-9_.-]+$" 
+                                   title="Solo letras, números, puntos o guiones (mínimo 3 caracteres)" required>
+                            <div class="form-text text-muted">Usarás este usuario para ingresar a consultar tus combates y perfil.</div>
+                        </div>
+
+                        <!-- Contraseña -->
+                        <div class="col-md-6">
+                            <label class="form-label text-light">Contraseña <span class="text-danger">*</span></label>
+                            <input type="password" name="password" id="password" class="form-control bg-dark text-white border-secondary" 
+                                   placeholder="Mínimo 4 caracteres" minlength="4" maxlength="50" required>
+                        </div>
+
+                        <!-- Confirmar Contraseña -->
+                        <div class="col-md-6">
+                            <label class="form-label text-light">Confirmar Contraseña <span class="text-danger">*</span></label>
+                            <input type="password" name="password_confirm" id="password_confirm" class="form-control bg-dark text-white border-secondary" 
+                                   placeholder="Repite la contraseña" minlength="4" maxlength="50" required>
+                            <div class="invalid-feedback" id="passwordError">Las contraseñas no coinciden.</div>
+                        </div>
+
+                        <div class="col-12 mt-4">
+                            <button type="submit" class="btn btn-warning w-100 fw-bold py-2 shadow">
+                                <i class="bi bi-send-check me-1"></i>Completar Pre-Inscripción
                             </button>
                         </div>
                     </form>
+                </div>
+                <div class="card-footer bg-dark text-center py-3 border-secondary">
+                    <span class="text-muted">¿Ya tienes una cuenta registrada?</span>
+                    <a href="{{ url_for('login') }}" class="text-warning text-decoration-none ms-1 fw-bold">Inicia sesión aquí</a>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const categoriasPorModalidad = {
+        'Libre Masculino': ['57 kg', '61 kg', '65 kg', '70 kg', '74 kg', '79 kg', '86 kg', '92 kg', '97 kg', '125 kg'],
+        'Grecorromana': ['55 kg', '60 kg', '63 kg', '67 kg', '72 kg', '77 kg', '82 kg', '87 kg', '97 kg', '130 kg'],
+        'Libre Femenino': ['50 kg', '53 kg', '55 kg', '57 kg', '59 kg', '62 kg', '65 kg', '68 kg', '72 kg', '76 kg']
+    };
+
+    const modalidadSelect = document.getElementById('modalidadSelect');
+    const categoriaPesoSelect = document.getElementById('categoriaPesoSelect');
+    const valorSeleccionadoPrevio = "{{ form_data.get('categoria_peso', '') if form_data else '' }}";
+
+    function actualizarCategorias() {
+        const modalidad = modalidadSelect.value;
+        const categorias = categoriasPorModalidad[modalidad] || [];
+        categoriaPesoSelect.innerHTML = '';
+
+        categorias.forEach(cat => {
+            const opt = document.createElement('option');
+            opt.value = cat;
+            opt.textContent = cat;
+            if (valorSeleccionadoPrevio && valorSeleccionadoPrevio === cat) {
+                opt.selected = true;
+            }
+            categoriaPesoSelect.appendChild(opt);
+        });
+    }
+
+    modalidadSelect.addEventListener('change', actualizarCategorias);
+    actualizarCategorias();
+
+    // Validación de contraseñas coincidentes en tiempo real
+    const form = document.getElementById('formRegistro');
+    const password = document.getElementById('password');
+    const passwordConfirm = document.getElementById('password_confirm');
+
+    form.addEventListener('submit', function(e) {
+        if (password.value !== passwordConfirm.value) {
+            e.preventDefault();
+            passwordConfirm.classList.add('is-invalid');
+            document.getElementById('passwordError').style.display = 'block';
+            passwordConfirm.focus();
+        } else {
+            passwordConfirm.classList.remove('is-invalid');
+            document.getElementById('passwordError').style.display = 'none';
+        }
+    });
+
+    passwordConfirm.addEventListener('input', function() {
+        if (password.value === passwordConfirm.value) {
+            passwordConfirm.classList.remove('is-invalid');
+            passwordConfirm.classList.add('is-valid');
+            document.getElementById('passwordError').style.display = 'none';
+        } else {
+            passwordConfirm.classList.remove('is-valid');
+            passwordConfirm.classList.add('is-invalid');
+            document.getElementById('passwordError').style.display = 'block';
+        }
+    });
+});
+</script>
 {% endblock %}

@@ -1,0 +1,24 @@
+# ========================================================
+# RENDER BLUEPRINT SPECIFICATION (render.yaml)
+# ========================================================
+# Infraestructura como Código para Render Web Service + Persistent Disk
+# NOTA: Los Persistent Disks en Render requieren un plan "Starter" o superior.
+
+services:
+  - type: web
+    name: sistema-torneo
+    runtime: python
+    plan: starter
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn --workers 2 --threads 2 --timeout 120 app:app
+    disk:
+      name: torneo-data
+      mountPath: /data
+      sizeGB: 1
+    envVars:
+      - key: DATABASE_PATH
+        value: /data/database.sqlite
+      - key: SECRET_KEY
+        generateValue: true
+      - key: PYTHONUNBUFFERED
+        value: "1"
