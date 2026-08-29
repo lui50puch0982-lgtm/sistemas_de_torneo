@@ -146,17 +146,34 @@ with app.app_context():
 # ==========================================
 
 @app.route('/')
+@app.route('/index')
+@app.route('/index.html')
 def index():
-    return render_template('index.html')
+    # Si el usuario ya está autenticado, enviarlo a su panel correspondiente
+    if 'user_id' in session:
+        if session.get('rol') == 'admin':
+            return redirect(url_for('admin_dashboard'))
+        else:
+            return redirect(url_for('perfil_atleta'))
+    # Si no ha iniciado sesión, redirigir a la pantalla principal de Login
+    return redirect(url_for('login'))
 
 @app.route('/login', methods=['GET', 'POST'])
+@app.route('/login.html', methods=['GET', 'POST'])
 def login():
+    # Si el usuario ya tiene sesión iniciada, redirigir según su rol
+    if request.method == 'GET' and 'user_id' in session:
+        if session.get('rol') == 'admin':
+            return redirect(url_for('admin_dashboard'))
+        else:
+            return redirect(url_for('perfil_atleta'))
+
     if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '')
         
         conn = get_db_connection()
-        user = conn.execute('SELECT * FROM usuarios WHERE username = ? AND password = ?', (username, password)).fetchone()
+        user = conn.execute('SELECT * FROM usuarios WHERE LOWER(username) = LOWER(?) AND password = ?', (username, password)).fetchone()
         conn.close()
         
         if user:
@@ -167,15 +184,19 @@ def login():
                 return redirect(url_for('admin_dashboard'))
             else:
                 return redirect(url_for('perfil_atleta'))
-        flash('Credenciales incorrectas.', 'danger')
+        flash('Credenciales incorrectas. Por favor verifica tu usuario y contraseña.', 'danger')
     return render_template('login.html')
 
 @app.route('/logout')
 def logout():
     session.clear()
+    flash('Has cerrado sesión correctamente.', 'info')
     return redirect(url_for('login'))
 
 @app.route('/registro_atleta', methods=['GET', 'POST'])
+@app.route('/registro', methods=['GET', 'POST'])
+@app.route('/registro.html', methods=['GET', 'POST'])
+@app.route('/registro_atleta.html', methods=['GET', 'POST'])
 def registro_usuario():
     if request.method == 'POST':
         nombre_completo = request.form.get('nombre_completo', '').strip()
@@ -958,5 +979,13 @@ def avanzar_clasificado_bracket(conn, combate_id, ganador_id):
             else:
                 conn.execute('UPDATE combates SET atleta_azul_id = ? WHERE id = ?', (ganador_id, siguiente_combate['id']))
 
+# ==========================================
+# MANEJADOR DE ERRORES (404 NOT FOUND)
+# ==========================================
+@app.errorhandler(404)
+def page_not_found(e):
+    return redirect(url_for('login'))
+
 if __name__ == '__main__':
-    app.run(debug=True)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=False)
