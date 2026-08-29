@@ -1,11 +1,28 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
+import os
+import re
 import sqlite3
 import itertools
 import random
 from functools import wraps
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 
 app = Flask(__name__)
-app.secret_key = 'clave_secreta_torneo'
+app.secret_key = os.environ.get('SECRET_KEY', 'clave_secreta_torneo_dev_default')
+
+# ==========================================
+# CONFIGURACIÓN DE BASE DE DATOS (PERSISTENCIA)
+# ==========================================
+# Ruta base del proyecto
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# DATABASE_PATH: En Render será '/data/database.sqlite' o '/data/torneo.db'
+# En desarrollo local por defecto se usará 'torneo.db' en el directorio del proyecto
+DATABASE_PATH = os.environ.get('DATABASE_PATH', os.path.join(BASE_DIR, 'torneo.db'))
+
+# Asegurar que el directorio de la base de datos exista (evita error 'unable to open database file')
+_db_dir = os.path.dirname(os.path.abspath(DATABASE_PATH))
+if _db_dir:
+    os.makedirs(_db_dir, exist_ok=True)
 
 # ==========================================
 # DECORADORES DE SEGURIDAD (ROLES Y SESIÓN)
@@ -37,8 +54,20 @@ def admin_required(f):
 # ==========================================
 
 def get_db_connection():
-    conn = sqlite3.connect('torneo.db')
+    # Asegurar que el directorio exista en tiempo de ejecución
+    _dir = os.path.dirname(os.path.abspath(DATABASE_PATH))
+    if _dir:
+        os.makedirs(_dir, exist_ok=True)
+
+    conn = sqlite3.connect(DATABASE_PATH, timeout=15.0)
     conn.row_factory = sqlite3.Row
+
+    # Optimizaciones de concurrencia e integridad para producción
+    conn.execute("PRAGMA journal_mode = WAL;")
+    conn.execute("PRAGMA foreign_keys = ON;")
+    conn.execute("PRAGMA busy_timeout = 5000;")
+    conn.execute("PRAGMA synchronous = NORMAL;")
+
     return conn
 
 def init_db():
@@ -149,19 +178,70 @@ def logout():
 @app.route('/registro_atleta', methods=['GET', 'POST'])
 def registro_usuario():
     if request.method == 'POST':
-        nombre_completo = request.form['nombre_completo']
-        ci = request.form['ci']
-        departamento = request.form['departamento']
-        club = request.form['club']
-        modalidad = request.form['modalidad']
-        categoria_peso = request.form['categoria_peso']
-        peso_inscripcion = float(request.form['peso_inscripcion'])
-        username = request.form['username']
-        password = request.form['password']
-        
+        nombre_completo = request.form.get('nombre_completo', '').strip()
+        ci = request.form.get('ci', '').strip()
+        departamento = request.form.get('departamento', '').strip()
+        club = request.form.get('club', '').strip()
+        modalidad = request.form.get('modalidad', '').strip()
+        categoria_peso = request.form.get('categoria_peso', '').strip()
+        peso_raw = request.form.get('peso_inscripcion', '').strip()
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '')
+        password_confirm = request.form.get('password_confirm', '')
+
+        # Validaciones de campos requeridos
+        if not all([nombre_completo, ci, departamento, club, modalidad, categoria_peso, peso_raw, username, password]):
+            flash('Por favor completa todos los campos del formulario.', 'danger')
+            return render_template('registro.html', form_data=request.form)
+
+        # Validación de Nombre Completo
+        if len(nombre_completo) < 3:
+            flash('El nombre completo debe contener al menos 3 caracteres.', 'danger')
+            return render_template('registro.html', form_data=request.form)
+
+        # Validación de CI / Documento
+        if len(ci) < 3:
+            flash('El número de C.I. / Documento de Identidad debe tener al menos 3 caracteres.', 'danger')
+            return render_template('registro.html', form_data=request.form)
+
+        # Validación de Peso
+        try:
+            peso_inscripcion = float(peso_raw)
+            if peso_inscripcion < 20 or peso_inscripcion > 250:
+                flash('El peso debe estar entre 20 kg y 250 kg.', 'danger')
+                return render_template('registro.html', form_data=request.form)
+        except (ValueError, TypeError):
+            flash('El peso de inscripción debe ser un número válido (ejemplo: 74.5).', 'danger')
+            return render_template('registro.html', form_data=request.form)
+
+        # Validación de Nombre de Usuario
+        if len(username) < 3:
+            flash('El nombre de usuario debe tener al menos 3 caracteres.', 'danger')
+            return render_template('registro.html', form_data=request.form)
+
+        if not re.match(r'^[a-zA-Z0-9_.-]+$', username):
+            flash('El nombre de usuario solo puede contener letras, números, puntos (.) o guiones (_-).', 'danger')
+            return render_template('registro.html', form_data=request.form)
+
+        # Validación de Contraseña
+        if len(password) < 4:
+            flash('La contraseña debe tener al menos 4 caracteres.', 'danger')
+            return render_template('registro.html', form_data=request.form)
+
+        if password_confirm and password != password_confirm:
+            flash('Las contraseñas ingresadas no coinciden.', 'danger')
+            return render_template('registro.html', form_data=request.form)
+
         conn = get_db_connection()
         cursor = conn.cursor()
-        
+
+        # Verificar si el usuario ya existe
+        usuario_existente = cursor.execute('SELECT id FROM usuarios WHERE LOWER(username) = LOWER(?)', (username,)).fetchone()
+        if usuario_existente:
+            conn.close()
+            flash(f'El nombre de usuario "{username}" ya está en uso. Por favor elige otro.', 'danger')
+            return render_template('registro.html', form_data=request.form)
+
         try:
             cursor.execute('INSERT INTO usuarios (username, password, rol) VALUES (?, ?, ?)',
                            (username, password, 'atleta'))
@@ -173,15 +253,20 @@ def registro_usuario():
             ''', (usuario_id, nombre_completo, ci, departamento, club, modalidad, categoria_peso, peso_inscripcion))
             
             conn.commit()
-            flash('Pre-inscripción enviada con éxito.', 'success')
+            flash('¡Pre-inscripción enviada con éxito! Ya puedes iniciar sesión con tu cuenta.', 'success')
             return redirect(url_for('login'))
         except sqlite3.IntegrityError:
             conn.rollback()
-            flash('El nombre de usuario ya existe.', 'danger')
+            flash('El nombre de usuario o registro ya existe en el sistema.', 'danger')
+            return render_template('registro.html', form_data=request.form)
+        except Exception as e:
+            conn.rollback()
+            flash(f'Error al procesar el registro: {str(e)}', 'danger')
+            return render_template('registro.html', form_data=request.form)
         finally:
             conn.close()
             
-    return render_template('registro.html')
+    return render_template('registro.html', form_data={})
 
 @app.route('/tabla_posiciones')
 def tabla_posiciones():
